@@ -1,0 +1,39 @@
+{
+  "structure_validation": {
+    "is_essay": true,
+    "valid": true,
+    "missing_sections": [],
+    "message": "Свободная структура эссе. Валидация не требуется."
+  },
+  "ai_detection": {
+    "sources": {
+      "gptzero": "Ошибка GPTZero: 401 Client Error: Unauthorized for url: https://api.gptzero.me/v2/detect",
+      "yandex": "В интернете есть много сайтов с информацией на эту тему. [Посмотрите, что нашлось в поиске](https://ya.ru)",
+      "chatgpt": "502 Bad Gateway\nUnable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared\n",
+      "local": {
+        "average_ai_probability": 0.486,
+        "likely_generated_snippets": [],
+        "repetition_score": 0.297,
+        "conclusion": "Текст скорее всего написан человеком."
+      }
+    },
+    "verdict": "Текст скорее всего написан человеком."
+  },
+  "freshness_check": {
+    "yandex": "В интернете есть много сайтов с информацией на эту тему. [Посмотрите, что нашлось в поиске](https://ya.ru)",
+    "chatgpt": "502 Bad Gateway\nUnable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared\n"
+  },
+  "similar_ideas": {
+    "yandex": "В интернете есть много сайтов с информацией на эту тему. [Посмотрите, что нашлось в поиске](https://ya.ru)",
+    "chatgpt": "502 Bad Gateway\nUnable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared\n"
+  },
+  "quality_evaluation": {
+    "yandex": {},
+    "chatgpt": {
+      "ясность": 7,
+      "выгода": 8,
+      "масштабируемость": 9,
+      "удобство": 6
+    }
+  }
+}

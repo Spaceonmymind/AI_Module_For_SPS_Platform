@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+.env
+
+# Models & temp
+*.pth
+*.pt
+*.xlsx
+*.csv
+*.docx
+*.pdf
+*.png
+*.jpg
+*.log
+
+# IDE
+.idea/
+.vscode/

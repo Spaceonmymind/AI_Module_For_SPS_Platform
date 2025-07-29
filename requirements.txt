@@ -1,0 +1,10 @@
+transformers
+torch
+openpyxl
+tqdm
+python-docx
+pandas
+seaborn
+matplotlib
+scikit-learn
+umap-learn

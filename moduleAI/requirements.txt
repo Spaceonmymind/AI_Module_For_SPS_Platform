@@ -1,0 +1,6 @@
+transformers
+torch
+requests
+python-docx
+python-dotenv
+pydantic
