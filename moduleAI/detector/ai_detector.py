@@ -1,7 +1,7 @@
-from moduleAI.detector.gptzero import GPTZeroDetector
-from moduleAI.detector.yandex import YandexGPTDetector
-from moduleAI.detector.local import LocalAIDetector
-from moduleAI.detector.chatgpt import detect_with_gpt
+from .detector.gptzero import GPTZeroDetector
+from .detector.yandex import YandexGPTDetector
+from .detector.local import LocalAIDetector
+from .detector.chatgpt import detect_with_gpt
 
 class AIDetector:
     """

@@ -1,11 +1,12 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from models.input import IdeaInput
 from utils.text_tools import extract_text_from_docx
 from main import TextAnalysisPipeline
 from pprint import pprint
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Загрузка токенов
 load_dotenv()
