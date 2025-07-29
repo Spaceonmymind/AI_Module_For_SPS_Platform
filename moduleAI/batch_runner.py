@@ -12,8 +12,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 load_dotenv()
 
 # Папка с документами
-INPUT_FOLDER = Path("data")
-OUTPUT_FOLDER = Path("results")
+BASE_DIR = Path(__file__).resolve().parent
+INPUT_FOLDER = BASE_DIR / "data"
+OUTPUT_FOLDER = BASE_DIR / "results"
 OUTPUT_FOLDER.mkdir(exist_ok=True)
 
 # Запуск
