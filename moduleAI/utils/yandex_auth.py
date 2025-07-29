@@ -5,7 +5,10 @@ import requests
 import jwt
 import time
 
-def get_iam_token_from_json_key(path_to_key="/Users/egorgladkih/PycharmProjects/AI_Module_For_SPS_Platform/moduleAI/keys/authorized_key.json") -> str:
+def get_iam_token_from_json_key(path_to_key=None) -> str:
+    # Используем относительный путь по умолчанию
+    if path_to_key is None:
+        path_to_key = Path(__file__).resolve().parent.parent / "keys" / "authorized_key.json"
 
     with open(path_to_key, "r") as f:
         key_data = json.load(f)
