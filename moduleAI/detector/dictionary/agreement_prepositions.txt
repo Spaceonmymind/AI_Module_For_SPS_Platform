@@ -1,0 +1,36 @@
+в,acc,loc
+во,acc,loc
+на,acc,loc
+с,gen,instr
+со,gen,instr
+к,dat
+ко,dat
+о,prep
+об,prep
+обо,prep
+по,dat,acc
+при,prep
+из,gen
+из-за,gen
+у,gen
+для,gen
+без,gen
+под,acc,instr
+над,instr
+про,acc
+от,gen
+до,gen
+между,instr
+через,acc
+за,acc,instr
+вследствие,gen
+вопреки,dat
+в течение,gen
+согласно,dat
+в связи с,instr
+в обмен на,acc
+на протяжении,gen
+в отношении,gen
+благодаря,dat
+по причине,gen
+в дополнение к,dat

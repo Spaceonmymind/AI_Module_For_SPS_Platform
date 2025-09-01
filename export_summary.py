@@ -9,67 +9,74 @@ def parse_result(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # AI Detection
+    row = {"Файл": os.path.basename(filepath)}
+
+    # --- Структура эссе ---
+    structure = data.get("structure_validation", {})
+    row.update({
+        "is_essay": structure.get("is_essay", ""),
+        "structure_valid": structure.get("valid", ""),
+        "structure_message": structure.get("message", ""),
+        "missing_sections": ", ".join(structure.get("missing_sections", [])) if isinstance(structure.get("missing_sections"), list) else ""
+    })
+
+    # --- AI Detection ---
     detection = data.get("ai_detection", {})
-    gptzero = detection.get("sources", {}).get("gptzero", "")
-    yandex_ai = detection.get("sources", {}).get("yandex", "")
-    chatgpt_ai = detection.get("sources", {}).get("chatgpt", "")
-    local = detection.get("sources", {}).get("local", {})
-    verdict = detection.get("verdict", "")
+    row["ai_verdict"] = detection.get("verdict", "")
+    sources = detection.get("sources", {}) or {}
+    for model, verdict in sources.items():
+        if isinstance(verdict, dict):
+            for k, v in verdict.items():
+                row[f"AI Verdict [{model}]: {k}"] = v
+        else:
+            row[f"AI Verdict [{model}]"] = verdict
 
-    # Freshness
-    freshness = data.get("freshness_check", {})
-    freshness_yandex = freshness.get("yandex", "")
-    freshness_chatgpt = freshness.get("chatgpt", "")
+    # --- Local Verdict ---
+    local = sources.get("local", {}) or {}
+    row.update({
+        "Local Verdict": local.get("verdict", ""),
+        "Local Score": local.get("score", ""),
+        "Local Comment": local.get("comment", "")
+    })
 
-    # Similar ideas
-    similar = data.get("similar_ideas", {})
-    similar_yandex = similar.get("yandex", "")
-    similar_chatgpt = similar.get("chatgpt", "")
+    # --- Freshness ---
+    freshness = data.get("freshness_check", {}) or {}
+    for model, answer in freshness.items():
+        row[f"Freshness [{model}]"] = answer
 
-    # Quality
-    quality = data.get("quality_evaluation", {})
-    quality_yandex = quality.get("yandex", {})
-    quality_chatgpt = quality.get("chatgpt", {})
+    # --- Similar Ideas ---
+    similar = data.get("similar_ideas", {}) or {}
+    for model, answer in similar.items():
+        row[f"Similar Ideas [{model}]"] = answer
 
-    # Result
-    return {
-        "Файл": os.path.basename(filepath),
-        "Вердикт": verdict,
+    # --- Quality Evaluation ---
+    quality = data.get("quality_evaluation", {}) or {}
+    for llm in ["yandex", "chatgpt"]:
+        if llm in quality and isinstance(quality[llm], dict):
+            for key, value in quality[llm].items():
+                row[f"Quality [{llm}]: {key}"] = value
 
-        "GPTZero": gptzero,
-        "Yandex AI": yandex_ai,
-        "ChatGPT AI": chatgpt_ai,
-        "Local AI %": local.get("average_ai_probability", ""),
-        "Local Repetition": local.get("repetition_score", ""),
-        "Local Conclusion": local.get("conclusion", ""),
+    # --- Local Analysis full details ---
+    local_analysis = data.get("local_analysis", {}) or {}
+    row["Local Heuristic Score"] = local_analysis.get("heuristic_score", "")
+    row["Local Prediction"] = local_analysis.get("ai_prediction", "")
+    row["Local Verdict Comment"] = local_analysis.get("verdict_comment", "")
+    details = local_analysis.get("details", {}) or {}
+    for k, v in details.items():
+        row[f"Local Feature: {k}"] = v
 
-        "Freshness Yandex": freshness_yandex,
-        "Freshness ChatGPT": freshness_chatgpt,
-
-        "Similar Yandex": similar_yandex,
-        "Similar ChatGPT": similar_chatgpt,
-
-        "Ясность (chatgpt)": quality_chatgpt.get("ясность", ""),
-        "Удобство (chatgpt)": quality_chatgpt.get("удобство", ""),
-        "Выгода (chatgpt)": quality_chatgpt.get("выгода", ""),
-        "Масштабируемость (chatgpt)": quality_chatgpt.get("масштабируемость", ""),
-
-        "Ясность (yandex)": quality_yandex.get("ясность", ""),
-        "Удобство (yandex)": quality_yandex.get("удобство", ""),
-        "Выгода (yandex)": quality_yandex.get("выгода", ""),
-        "Масштабируемость (yandex)": quality_yandex.get("масштабируемость", ""),
-    }
-
+    return row
 
 def export_all_to_excel():
     summaries = []
-
     for filename in os.listdir(RESULTS_DIR):
         if filename.endswith(".json"):
             filepath = os.path.join(RESULTS_DIR, filename)
-            summary = parse_result(filepath)
-            summaries.append(summary)
+            try:
+                summary = parse_result(filepath)
+                summaries.append(summary)
+            except Exception as e:
+                print(f"⚠️ Ошибка при обработке {filename}: {e}")
 
     df = pd.DataFrame(summaries)
     df.to_excel(EXPORT_PATH, index=False)

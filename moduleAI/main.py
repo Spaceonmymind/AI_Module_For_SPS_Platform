@@ -6,6 +6,8 @@ from relevance.freshness_checker import FreshnessChecker
 from similarity.analogue_finder import AnalogueFinder
 from evaluator.quality_evaluator import QualityEvaluator
 from aggregator.result_builder import ResultBuilder
+from detector.local import LocalAIDetector
+
 
 
 
@@ -18,7 +20,7 @@ class TextAnalysisPipeline:
         self.similarity = AnalogueFinder()
         self.evaluator = QualityEvaluator()
         self.aggregator = ResultBuilder()
-
+        self.local_detector = LocalAIDetector()
 
     def run(self, idea: IdeaInput):
         sections = self.parser.parse(idea.text)
@@ -27,12 +29,14 @@ class TextAnalysisPipeline:
         outdated_fragments = self.freshness.check(idea.text)
         similar_ideas = self.similarity.find(idea.text)
         quality_scores = self.evaluator.evaluate(idea.text)
+        local_analysis = self.local_detector.detect(idea.text)
 
         final_result = self.aggregator.build(
             structure_report=structure_report,
             ai_detection=ai_detection,
             outdated_fragments=outdated_fragments,
             similar_ideas=similar_ideas,
-            quality_scores=quality_scores
+            quality_scores=quality_scores,
+            local_analysis=local_analysis
         )
         return final_result

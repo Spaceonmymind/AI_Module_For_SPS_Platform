@@ -1,29 +1,65 @@
 from .gptzero import GPTZeroDetector
 from .yandex import YandexGPTDetector
 from .local import LocalAIDetector
-from .chatgpt import detect_with_gpt
+from .gpt4o import detect_with_gpt
+import g4f
+
 
 class AIDetector:
-    """
-    Универсальный детектор: агрегирует все методы — GPTZero, YandexGPT, Local BERT.
-    """
-
     def __init__(self):
         self.gptzero = GPTZeroDetector()
         self.yandex = YandexGPTDetector()
         self.local = LocalAIDetector()
 
-
     def detect(self, text: str) -> dict:
-        chatgpt_result = detect_with_gpt(text)
         results = {
             "gptzero": self.gptzero.detect(text),
             "yandex": self.yandex.detect(text),
-            "chatgpt": chatgpt_result,
-            "local": self.local.detect(text)
+            "chatgpt": detect_with_gpt(text)
         }
 
-        # Генерация итогового вердикта
+        # --- Local ---
+        local_raw = self.local.detect(text)
+        results["local"] = {
+            "average_ai_probability": local_raw.get("final_ai_score", 0),
+            "likely_generated_snippets": [],
+            "repetition_score": 0.0,
+            "conclusion": (
+                "Текст скорее всего сгенерирован ИИ."
+                if local_raw.get("ai_prediction", 0) else "Текст скорее всего написан человеком."
+            ),
+            "classifiers": local_raw
+        }
+
+        # --- g4f модели ---
+        g4f_models = [
+            "llama-2-7b",
+            "gemini-2.0", "blackboxai", "command-r", "qwen-2.5",
+            "grok-3-mini", "sonar-pro"
+        ]
+
+        for model in g4f_models:
+            try:
+                print(f"⏳ [{model}] start...")
+                response = g4f.ChatCompletion.create(
+                    model=model,
+                    messages=[{
+                        "role": "user",
+                        "content": (
+                            "Проанализируй текст и определи, был ли он сгенерирован искусственным интеллектом "
+                            "или написан человек ом. Объясни, по каким признакам ты сделал вывод. "
+                            "Не пиши ничего лишнего, только аналитический вывод.\n\n"
+                            f"Текст:\n{text}"
+                        )
+                    }],
+                    stream=False
+                )
+                print(f"✅ [{model}] done.")
+                results[model] = response
+            except Exception as e:
+                results[model] = f"Ошибка {model}: {str(e)}"
+
+        # --- Вердикт ---
         verdict = self._aggregate_verdict(results)
 
         return {
@@ -32,12 +68,12 @@ class AIDetector:
         }
 
     def _aggregate_verdict(self, results: dict) -> str:
-        local_prob = results["local"]["average_ai_probability"]
-        gptzero_prob = self._extract_percentage(results["gptzero"])
-        yandex_text = results["yandex"].lower()
-        chatgpt_text = results["chatgpt"].lower()
-
         ai_signals = 0
+
+        local_prob = results.get("local", {}).get("average_ai_probability", 0)
+        gptzero_prob = self._extract_percentage(results.get("gptzero", "0%"))
+        yandex_text = results.get("yandex", "").lower()
+        chatgpt_text = results.get("chatgpt", "").lower()
 
         if local_prob >= 0.75:
             ai_signals += 1
@@ -48,9 +84,20 @@ class AIDetector:
         if "сгенерирован" in chatgpt_text or "искусственным интеллектом" in chatgpt_text:
             ai_signals += 1
 
-        if ai_signals == 3:
+        for model in [
+            "llama-2-7b",
+            "gemini-2.0", "blackboxai", "command-r", "qwen-2.5",
+            "grok-3-mini", "sonar-pro"
+        ]:
+            response = results.get(model)
+            if isinstance(response, str):
+                text = response.lower()
+                if "сгенерирован" in text or "искусственным интеллектом" in text:
+                    ai_signals += 1
+
+        if ai_signals >= 5:
             return "Высокая вероятность, что текст сгенерирован ИИ."
-        elif ai_signals == 2:
+        elif ai_signals >= 3:
             return "Возможно, текст содержит ИИ-сгенерированные фрагменты."
         else:
             return "Текст скорее всего написан человеком."

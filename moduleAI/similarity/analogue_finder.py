@@ -1,6 +1,6 @@
 import os
 import requests
-import g4f  # подключаем поддержку gpt-4o
+import g4f
 
 from utils.yandex_auth import get_iam_token_from_json_key
 
@@ -14,17 +14,25 @@ class AnalogueFinder:
     def find(self, text: str) -> dict:
         result = {
             "yandex": None,
-            "chatgpt": None
+            "gpt-4o-mini": None,
+            "llama-2-7b": None,
+            "gemini-2.0": None,
+            "blackboxai": None,
+            "command-r": None,
+            "qwen-2.5": None,
+            "grok-3-mini": None,
+            "sonar-pro": None
         }
 
-        # --- Поиск аналогов через Yandex GPT ---
-        if self.iam_token and self.folder_id:
-            prompt = (
-                "Ты аналитик стартапов. На основе представленного описания идеи определи похожие проекты, "
-                "сервисы или стартапы в России или за рубежом. Назови конкретные названия и кратко поясни, чем они похожи.\n\n"
-                f"Описание:\n{text}"
-            )
+        # --- Единый prompt ---
+        prompt = (
+            "На основе следующего описания идеи, предложи аналоги: стартапы, сервисы или продукты, "
+            "которые реализуют похожую концепцию. Укажи названия и поясни кратко, в чём сходство.\n\n"
+            f"Описание:\n{text}"
+        )
 
+        # --- YandexGPT ---
+        if self.iam_token and self.folder_id:
             body = {
                 "modelUri": f"gpt://{self.folder_id}/yandexgpt/latest",
                 "completionOptions": {
@@ -53,22 +61,25 @@ class AnalogueFinder:
         else:
             result["yandex"] = "YANDEX токен или folder_id не указаны"
 
-        # --- Поиск аналогов через GPT-4o ---
-        try:
-            gpt_prompt = (
-                "На основе следующего описания идеи, предложи аналоги: стартапы, сервисы или продукты, "
-                "которые реализуют похожую концепцию. Укажи названия и поясни кратко, в чём сходство.\n\n"
-                f"Описание:\n{text}"
-            )
+        # # --- Модели g4f ---
+        g4f_models = [
+            "gpt-4o-mini", "llama-2-7b",
+            "gemini-2.0", "blackboxai", "command-r", "qwen-2.5",
+            "grok-3-mini", "sonar-pro"
+        ]
 
-            chat_response = g4f.ChatCompletion.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": gpt_prompt}],
-                stream=False
-            )
-
-            result["chatgpt"] = chat_response
-        except Exception as e:
-            result["chatgpt"] = f"Ошибка ChatGPT (g4f): {str(e)}"
-
+        for model_name in g4f_models:
+            try:
+                print(f"⏳ [{model_name}] start...")
+                chat_response = g4f.ChatCompletion.create(
+                    model=model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    stream=False
+                )
+                print(f"✅ [{model_name}] done.")
+                result[model_name] = chat_response
+            except Exception as e:
+                result[model_name] = f"Ошибка {model_name}: {str(e)}"
+        #
         return result
+
