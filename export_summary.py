@@ -51,10 +51,30 @@ def parse_result(filepath):
 
     # --- Quality Evaluation ---
     quality = data.get("quality_evaluation", {}) or {}
-    for llm in ["yandex", "chatgpt"]:
-        if llm in quality and isinstance(quality[llm], dict):
-            for key, value in quality[llm].items():
-                row[f"Quality [{llm}]: {key}"] = value
+    all_scores = []
+    for llm, eval_data in quality.items():
+        if isinstance(eval_data, dict):
+            for key, value in eval_data.items():
+                if isinstance(value, (int, float)):
+                    row[f"Quality [{llm}]: {key}"] = value
+                    all_scores.append(value)
+
+    # --- Средний балл и приоритет ---
+    if all_scores:
+        avg_score = round(sum(all_scores) / len(all_scores), 2)
+    else:
+        avg_score = None
+
+    row["Average Score"] = avg_score
+
+    if avg_score is None:
+        row["Priority"] = "Не определён"
+    elif avg_score < 4:
+        row["Priority"] = "Низкий"
+    elif avg_score < 7:
+        row["Priority"] = "Средний"
+    else:
+        row["Priority"] = "Высокий"
 
     # --- Local Analysis full details ---
     local_analysis = data.get("local_analysis", {}) or {}
@@ -79,6 +99,15 @@ def export_all_to_excel():
                 print(f"⚠️ Ошибка при обработке {filename}: {e}")
 
     df = pd.DataFrame(summaries)
+
+    if not df.empty:
+        # --- Сортировка по среднему баллу ---
+        df = df.sort_values(by="Average Score", ascending=False)
+
+        # --- Перенос колонок (Average Score, Priority вперед) ---
+        cols = ["Average Score", "Priority"] + [c for c in df.columns if c not in ["Average Score", "Priority"]]
+        df = df[cols]
+
     df.to_excel(EXPORT_PATH, index=False)
     print(f"✅ Экспорт завершён: {EXPORT_PATH}")
 

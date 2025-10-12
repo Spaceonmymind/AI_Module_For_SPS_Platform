@@ -11,27 +11,39 @@ class AnalogueFinder:
         self.folder_id = os.getenv("YANDEX_FOLDER_ID")
         self.api_url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
 
+        print(f"🔑 AnalogueFinder инициализирован. "
+              f"folder_id={self.folder_id}, token={'есть' if self.iam_token else 'нет'}")
+
     def find(self, text: str) -> dict:
         result = {
             "yandex": None,
             "gpt-4o-mini": None,
-            "llama-2-7b": None,
+            "deepseek-v3-0324-turbo": None,
             "gemini-2.0": None,
-            "blackboxai": None,
+            "gpt-oss-120b": None,
             "command-r": None,
-            "qwen-2.5": None,
-            "grok-3-mini": None,
-            "sonar-pro": None
+            "llama-4-maverick": None,
+            "mistral-small-3.1-24b": None,
+            "gemini-2.0-flash-thinking": None
         }
 
         # --- Единый prompt ---
         prompt = (
             "На основе следующего описания идеи, предложи аналоги: стартапы, сервисы или продукты, "
-            "которые реализуют похожую концепцию. Укажи названия и поясни кратко, в чём сходство.\n\n"
-            f"Описание:\n{text}"
+            "которые реализуют похожую концепцию. Будь экспертом в области финтеха, ИТ и цифровых сервисов.\n\n"
+            "Требования к ответу:\n"
+            "1. Для каждой идеи подбери 3–5 аналогов (существующих стартапов, сервисов или продуктов).\n"
+            "2. Укажи название аналога (обязательно).\n"
+            "3. Опиши кратко, в чём заключается сходство с анализируемой идеей.\n"
+            "4. Если есть различия, которые делают аналог менее подходящим, также отметь это.\n\n"
+            "Формат ответа:\n"
+            "- Аналог: <название>\n"
+            "- Сходство: <краткое объяснение>\n"
+            "- Отличие: <если есть>\n\n"
+            f"Описание идеи:\n{text}"
         )
 
-        # --- YandexGPT ---
+        # --- Yandex GPT ---
         if self.iam_token and self.folder_id:
             body = {
                 "modelUri": f"gpt://{self.folder_id}/yandexgpt/latest",
@@ -41,11 +53,13 @@ class AnalogueFinder:
                     "maxTokens": 800
                 },
                 "messages": [
+                    {"role": "system", "text": "Ты эксперт по анализу стартапов и поиску аналогов."},
                     {"role": "user", "text": prompt}
                 ]
             }
 
             try:
+                print("📤 [Yandex] Запрос:", body)  # DEBUG
                 response = requests.post(
                     self.api_url,
                     headers={
@@ -54,18 +68,21 @@ class AnalogueFinder:
                     },
                     json=body
                 )
+                print("📥 [Yandex] Статус:", response.status_code)
+                print("📥 [Yandex] Ответ (обрезан):", response.text[:300])
+
                 response.raise_for_status()
-                result["yandex"] = response.json()['result']['alternatives'][0]['message']['text']
+                result["yandex"] = response.json()["result"]["alternatives"][0]["message"]["text"]
             except Exception as e:
                 result["yandex"] = f"Ошибка YandexGPT: {str(e)}"
         else:
             result["yandex"] = "YANDEX токен или folder_id не указаны"
 
-        # # --- Модели g4f ---
+        # --- Модели g4f ---
         g4f_models = [
-            "gpt-4o-mini", "llama-2-7b",
-            "gemini-2.0", "blackboxai", "command-r", "qwen-2.5",
-            "grok-3-mini", "sonar-pro"
+            "deepseek-v3-0324-turbo", "gpt-4o-mini",
+            "gemini-2.0", "gpt-oss-120b", "command-r", "llama-4-maverick",
+            "mistral-small-3.1-24b", "gemini-2.0-flash-thinking"
         ]
 
         for model_name in g4f_models:
@@ -80,6 +97,5 @@ class AnalogueFinder:
                 result[model_name] = chat_response
             except Exception as e:
                 result[model_name] = f"Ошибка {model_name}: {str(e)}"
-        #
-        return result
 
+        return result
