@@ -25,7 +25,7 @@ def detect_with_gpt(text: str) -> str:
 
     try:
         response = g4f.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gemini-2.0",
             messages=[{"role": "user", "content": prompt}],
             stream=False
         )

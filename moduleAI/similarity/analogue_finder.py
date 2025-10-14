@@ -17,13 +17,8 @@ class AnalogueFinder:
     def find(self, text: str) -> dict:
         result = {
             "yandex": None,
-            "gpt-4o-mini": None,
-            "deepseek-v3-0324-turbo": None,
             "gemini-2.0": None,
-            "gpt-oss-120b": None,
             "command-r": None,
-            "llama-4-maverick": None,
-            "mistral-small-3.1-24b": None,
             "gemini-2.0-flash-thinking": None
         }
 
@@ -80,9 +75,8 @@ class AnalogueFinder:
 
         # --- Модели g4f ---
         g4f_models = [
-            "deepseek-v3-0324-turbo", "gpt-4o-mini",
-            "gemini-2.0", "gpt-oss-120b", "command-r", "llama-4-maverick",
-            "mistral-small-3.1-24b", "gemini-2.0-flash-thinking"
+            "gemini-2.0", "command-r",
+            "gemini-2.0-flash-thinking"
         ]
 
         for model_name in g4f_models:

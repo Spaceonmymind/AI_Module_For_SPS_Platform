@@ -33,9 +33,8 @@ class AIDetector:
 
         # --- g4f модели ---
         g4f_models = [
-            "deepseek-v3-0324-turbo",
-            "gemini-2.0", "gpt-oss-120b", "command-r", "llama-4-maverick",
-            "mistral-small-3.1-24b", "gemini-2.0-flash-thinking"
+            "gemini-2.0", "command-r",
+            "gemini-2.0-flash-thinking"
         ]
 
         for model in g4f_models:
@@ -103,9 +102,8 @@ class AIDetector:
             ai_signals += 1
 
         for model in [
-            "deepseek-v3-0324-turbo",
             "gemini-2.0", "gpt-oss-120b", "command-r", "llama-4-maverick",
-            "mistral-small-3.1-24b", "gemini-2.0-flash-thinking"
+            "gemini-2.0-flash-thinking"
         ]:
             response = results.get(model)
             if isinstance(response, str):
