@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from pydantic import BaseModel
 
 app = FastAPI(title="SPS AI Service")
 app.add_middleware(
@@ -127,5 +128,33 @@ async def analyze_file(file: UploadFile = File(...), doc_type: Optional[str] = F
         logging.exception("Analyze error")
         raise HTTPException(500, f"Analyze error: {e}")
 
+class AnalyzeInput(BaseModel):
+    file_path: str
+    doc_type: Optional[str] = None
+
+@app.post("/analyze")
+async def analyze_path(inp: AnalyzeInput):
+    """
+    Основной эндпоинт для SPS_Platform.
+    Получает путь к файлу и тип документа.
+    """
+    file_path = inp.file_path
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"Файл не найден: {file_path}")
+
+    try:
+        with open(file_path, "rb") as f:
+            content = f.read()
+        text = _parse_document(file_path, content)
+        result = _run_pipeline(text, inp.doc_type)
+        return {"status": "done", "result": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.exception("Analyze error (file_path)")
+        raise HTTPException(status_code=500, detail=f"Analyze error: {e}")
+
+
+
 if __name__ == "__main__":
-    uvicorn.run("ai_service:app", host="0.0.0.0", port=8001, workers=1)
+    uvicorn.run("ai_service:app", host="0.0.0.0", port=5005, workers=1)
